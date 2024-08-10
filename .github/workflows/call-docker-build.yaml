@@ -110,24 +110,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Aqua Security Trivy
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ github.run_id }}
-          exit-code: 0 # exit code 0 means no vulnerabilities found => this id done in order to prevent blocking the build initially
-          format: table
-
-      - name: Run Trivy for HIGH,CRITICAL CVEs and report (blocking)
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: ${{ github.run_id }}
-          exit-code: 1
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "HIGH,CRITICAL"
-          format: "sarif"
-          output: "trivy-results.sarif"
-
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
@@ -159,6 +141,24 @@ jobs:
           cache-to: type=gha,mode=max
           #Platforms distribution granted bu QEMU
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+
+      - name: Aqua Security Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ github.run_id }}
+          exit-code: 0 # exit code 0 means no vulnerabilities found => this id done in order to prevent blocking the build initially
+          format: table
+
+      - name: Run Trivy for HIGH,CRITICAL CVEs and report (blocking)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ github.run_id }}
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
+          format: "sarif"
+          output: "trivy-results.sarif"
 #      - name: Find Comment
 #        uses: peter-evans/find-comment@v3.1.0
 #
