@@ -105,6 +105,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Aqua Security Trivy
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ github.run_id }}
+          exit-code: 0 # exit code 0 means no vulnerabilities found => this id done in order to prevent blocking the build initially
+          format: table
+
       - name: Docker Metadata action
         uses: docker/metadata-action@v5.5.1
         id: docker_meta
