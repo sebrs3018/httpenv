@@ -90,9 +90,13 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      pull-requests: write
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
       - name: Docker Setup QEMU
         uses: docker/setup-qemu-action@v3.2.0
 
@@ -112,6 +116,23 @@ jobs:
           exit-code: 0 # exit code 0 means no vulnerabilities found => this id done in order to prevent blocking the build initially
           format: table
 
+      - name: Run Trivy for HIGH,CRITICAL CVEs and report (blocking)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ github.run_id }}
+          exit-code: 1
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "HIGH,CRITICAL"
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
       - name: Docker Metadata action
         uses: docker/metadata-action@v5.5.1
         id: docker_meta
@@ -120,11 +141,11 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=raw,value=04
-            type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
-            type=ref,event=pr
-            type=ref,event=branch
-            type=semver,pattern={{version}}
+            type=raw,value=07
+          #  type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
+          #  type=ref,event=pr
+          #  type=ref,event=branch
+          #  type=semver,pattern={{version}}
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v6.6.1
@@ -137,32 +158,31 @@ jobs:
           cache-to: type=gha,mode=max
           #Platforms distribution granted bu QEMU
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-
-      - name: Find Comment
-        uses: peter-evans/find-comment@v3.1.0
-
-        if: github.event_name == 'pull_request'
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: Docker image tag(s) pushed
-
-      - name: Create or Update Comment
-        uses: peter-evans/create-or-update-comment@v4.0.0
-
-        if: github.event_name == 'pull_request'
-        with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            Docker image tag(s) pushed:
-            ```text
-            ${{ steps.docker_meta.outputs.tags }}
-            ```
-
-            Labels added to images:
-            ```text
-            ${{ steps.docker_meta.outputs.labels }}
-            ```
-          edit-mode: replace
+#      - name: Find Comment
+#        uses: peter-evans/find-comment@v3.1.0
+#
+#        if: github.event_name == 'pull_request'
+#        id: fc
+#        with:
+#          issue-number: ${{ github.event.pull_request.number }}
+#          comment-author: "github-actions[bot]"
+#          body-includes: Docker image tag(s) pushed
+#
+#      - name: Create or Update Comment
+#        uses: peter-evans/create-or-update-comment@v4.0.0
+#
+#        if: github.event_name == 'pull_request'
+#        with:
+#          comment-id: ${{ steps.fc.outputs.comment-id }}
+#          issue-number: ${{ github.event.pull_request.number }}
+#          body: |
+#            Docker image tag(s) pushed:
+#            ```text
+#            ${{ steps.docker_meta.outputs.tags }}
+#            ```
+#
+#            Labels added to images:
+#            ```text
+#            ${{ steps.docker_meta.outputs.labels }}
+#            ```
+#          edit-mode: replace
