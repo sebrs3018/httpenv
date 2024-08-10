@@ -90,6 +90,9 @@ jobs:
       name: Docker login and build
       runs-on: ubuntu-latest
       steps:
+        - name: Docker Setup QEMU
+          uses: docker/setup-qemu-action@v3.2.0
+            
         - name: Docker Setup Buildx
           uses: docker/setup-buildx-action@v3.6.1
 
@@ -103,7 +106,10 @@ jobs:
           uses: docker/build-push-action@v6.6.1
           with:
             push: true
-            tags: sebrs3018/playground:latest,sebrs3018/playground:1.0 
-            cache-from: type=gha
+            tags: sebrs3018/playground:latest,sebrs3018/playground:1.0
+            #Cache capabilities granted by docker buildx 
+            cache-from: type=gha 
             cache-to: type=gha,mode=max
+            #Platforms distribution granted bu QEMU
+            platforms: linux/amd64,linux/arm64,linux/arm/v7
     
