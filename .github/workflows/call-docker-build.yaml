@@ -95,9 +95,6 @@ jobs:
       actions: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.7
-
       - name: Docker Setup QEMU
         uses: docker/setup-qemu-action@v3.2.0
 
@@ -128,8 +125,8 @@ jobs:
         uses: docker/build-push-action@v6.6.1
         with:
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ github.run_id }}
+          #labels: ${{ steps.docker_meta.outputs.labels }}
           #Cache capabilities granted by docker buildx
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -154,36 +151,11 @@ jobs:
           format: "sarif"
           output: "trivy-results.sarif"
 
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
-#      - name: Find Comment
-#        uses: peter-evans/find-comment@v3.1.0
-#
-#        if: github.event_name == 'pull_request'
-#        id: fc
-#        with:
-#          issue-number: ${{ github.event.pull_request.number }}
-#          comment-author: "github-actions[bot]"
-#          body-includes: Docker image tag(s) pushed
-#
-#      - name: Create or Update Comment
-#        uses: peter-evans/create-or-update-comment@v4.0.0
-#
-#        if: github.event_name == 'pull_request'
-#        with:
-#          comment-id: ${{ steps.fc.outputs.comment-id }}
-#          issue-number: ${{ github.event.pull_request.number }}
-#          body: |
-#            Docker image tag(s) pushed:
-#            ```text
-#            ${{ steps.docker_meta.outputs.tags }}
-#            ```
-#
-#            Labels added to images:
-#            ```text
-#            ${{ steps.docker_meta.outputs.labels }}
-#            ```
-#          edit-mode: replace
