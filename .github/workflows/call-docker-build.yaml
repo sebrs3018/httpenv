@@ -132,7 +132,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           #Platforms distribution granted bu QEMU
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64
 
       - name: Aqua Security Trivy
         uses: aquasecurity/trivy-action@0.24.0
