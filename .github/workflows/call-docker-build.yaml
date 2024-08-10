@@ -124,8 +124,8 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@v6.6.1
         with:
-          push: true
-          load: false
+          push: false
+          load: true
           tags: ${{ github.run_id }}
           #labels: ${{ steps.docker_meta.outputs.labels }}
           #Cache capabilities granted by docker buildx
